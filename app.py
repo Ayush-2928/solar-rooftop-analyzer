@@ -7,7 +7,7 @@ from PIL import Image
 import io
 
 # Configuration
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")  # No default value
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Function to encode image to base64
@@ -22,19 +22,21 @@ def analyze_image(image_base64, location, electricity_rate):
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json"
     }
+
     prompt = f"""
     Analyze the provided satellite image of a rooftop for solar panel installation potential.
     Provide the following in JSON format:
-    - roof_area_sqm: float
-    - azimuth_degrees: float
-    - tilt_degrees: float
-    - shading_percentage: float
-    - suggested_panel_type: string
-    - estimated_annual_kwh: float
+    {{
+        "roof_area_sqm": float,
+        "azimuth_degrees": float,
+        "tilt_degrees": float,
+        "shading_percentage": float,
+        "suggested_panel_type": string,
+        "estimated_annual_kwh": float
+    }}
 
-    Additional context:
-    - Location: {location}
-    - Electricity rate: ${electricity_rate}/kWh
+    Location: {location}
+    Electricity rate: ${electricity_rate}/kWh
     """
 
     payload = {
@@ -57,10 +59,17 @@ def analyze_image(image_base64, location, electricity_rate):
         result_json = response.json()
         content = result_json["choices"][0]["message"]["content"]
 
-        # Clean and parse content
-        if content.startswith("```json"):
-            content = content.strip("```json").strip("```").strip()
-        return json.loads(content)
+        # Try to extract JSON from messy text
+        try:
+            # Extract valid JSON using regex or clean manually
+            json_start = content.find("{")
+            json_end = content.rfind("}") + 1
+            json_text = content[json_start:json_end]
+            return json.loads(json_text)
+        except Exception as e:
+            st.error("Failed to parse model's response as JSON.")
+            st.text(content)
+            return None
     except requests.exceptions.RequestException as e:
         st.error(f"API request failed: {str(e)}")
         return None
@@ -68,12 +77,12 @@ def analyze_image(image_base64, location, electricity_rate):
         st.error(f"Failed to parse API JSON response: {str(e)}")
         return None
 
-# Function to calculate ROI
+# ROI calculation
 def calculate_roi(roof_area_sqm, estimated_annual_kwh, electricity_rate):
-    panel_efficiency = 0.20  # 20%
-    cost_per_watt = 3.0  # $3/W
-    incentive_rate = 0.30  # 30% tax credit
-    panel_watts_per_sqm = 200  # 200W/m² for 20% efficient panels
+    panel_efficiency = 0.20
+    cost_per_watt = 3.0
+    incentive_rate = 0.30
+    panel_watts_per_sqm = 200
 
     total_watts = roof_area_sqm * panel_watts_per_sqm
     installation_cost = total_watts * cost_per_watt
@@ -100,38 +109,41 @@ uploaded_file = st.file_uploader("Choose a satellite image", type=["png", "jpg",
 location = st.text_input("📍 Location (City, State)", value="San Francisco, CA")
 electricity_rate = st.number_input("💡 Electricity Rate ($/kWh)", min_value=0.0, value=0.15, step=0.01)
 
-if uploaded_file and st.button("🔍 Analyze"):
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Satellite Image", use_container_width=True)
+if uploaded_file and st.button("Analyze"):
+    try:
+        image = Image.open(uploaded_file)
+        st.image(image, caption="Uploaded Satellite Image", use_column_width=True)
+        image_base64 = encode_image(image)
+        analysis = analyze_image(image_base64, location, electricity_rate)
 
-    image_base64 = encode_image(image)
-    analysis = analyze_image(image_base64, location, electricity_rate)
+        if analysis:
+            st.subheader("📊 Analysis Results")
+            st.json(analysis)
 
-    if analysis:
-        st.subheader("📊 Analysis Results")
-        st.json(analysis)
+            roi = calculate_roi(
+                analysis["roof_area_sqm"],
+                analysis["estimated_annual_kwh"],
+                electricity_rate
+            )
 
-        roi = calculate_roi(
-            analysis["roof_area_sqm"],
-            analysis["estimated_annual_kwh"],
-            electricity_rate
-        )
+            st.subheader("💰 ROI Estimates")
+            st.markdown(f"- **Total System Size**: {roi['total_watts']:.2f} W")
+            st.markdown(f"- **Installation Cost**: ${roi['installation_cost']:.2f}")
+            st.markdown(f"- **Incentive (30%)**: ${roi['incentive']:.2f}")
+            st.markdown(f"- **Net Cost**: ${roi['net_cost']:.2f}")
+            st.markdown(f"- **Estimated Annual Savings**: ${roi['annual_savings']:.2f}")
+            st.markdown(f"- **Payback Period**: {roi['payback_period_years']:.2f} years")
 
-        st.subheader("💰 ROI Estimates")
-        st.markdown(f"- **Total System Size**: {roi['total_watts']:.2f} W")
-        st.markdown(f"- **Installation Cost**: ${roi['installation_cost']:.2f}")
-        st.markdown(f"- **Incentive (30%)**: ${roi['incentive']:.2f}")
-        st.markdown(f"- **Net Cost**: ${roi['net_cost']:.2f}")
-        st.markdown(f"- **Estimated Annual Savings**: ${roi['annual_savings']:.2f}")
-        st.markdown(f"- **Payback Period**: {roi['payback_period_years']:.2f} years")
+            st.subheader("✅ Recommendations")
+            st.write(f"**Suggested Panel Type**: {analysis['suggested_panel_type']}")
+            st.write("Ensure compliance with local building codes and net metering policies.")
+        else:
+            st.error("Image analysis failed. Please try again.")
 
-        st.subheader("✅ Recommendations")
-        st.write(f"**Suggested Panel Type**: {analysis['suggested_panel_type']}")
-        st.write("Ensure compliance with local building codes and net metering policies.")
-    else:
-        st.error("Image analysis failed. Please try again.")
+    except Exception as e:
+        st.error(f"Unexpected error: {e}")
 
-# How to use
+# Instructions
 st.subheader("📘 How to Use")
 st.markdown("""
 1. Upload a **clear satellite image** of your rooftop (PNG, JPG).
