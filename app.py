@@ -102,7 +102,7 @@ electricity_rate = st.number_input("💡 Electricity Rate ($/kWh)", min_value=0.
 
 if uploaded_file and st.button("🔍 Analyze"):
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Satellite Image", use_container_width=True)
+    st.image(image, caption="Uploaded Satellite Image", use_column_width=True)
 
     image_base64 = encode_image(image)
     analysis = analyze_image(image_base64, location, electricity_rate)
