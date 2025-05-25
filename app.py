@@ -109,18 +109,12 @@ uploaded_file = st.file_uploader("Choose a satellite image", type=["png", "jpg",
 location = st.text_input("📍 Location (City, State)", value="San Francisco, CA")
 electricity_rate = st.number_input("💡 Electricity Rate ($/kWh)", min_value=0.0, value=0.15, step=0.01)
 
-<<<<<<< HEAD
 if uploaded_file and st.button("Analyze"):
     try:
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded Satellite Image", use_column_width=True)
         image_base64 = encode_image(image)
         analysis = analyze_image(image_base64, location, electricity_rate)
-=======
-if uploaded_file and st.button("🔍 Analyze"):
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Satellite Image", use_column_width=True)
->>>>>>> 34f83b8a915bafd8950d61e02587fa81ebf91441
 
         if analysis:
             st.subheader("📊 Analysis Results")
