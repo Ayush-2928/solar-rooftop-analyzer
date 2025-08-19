@@ -9,17 +9,15 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # --- Google Analytics tracking (place this near the top of your file) ---
-ga_js = """
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-MT8S1SFPLB"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+
   gtag('config', 'G-MT8S1SFPLB');
 </script>
-"""
-components.html(ga_js, height=0)
 
 # --- Your normal Streamlit app below ---
 st.title("My Streamlit App")
@@ -171,4 +169,5 @@ st.markdown("""
 3. Input your **electricity rate** ($/kWh).
 4. Click **Analyze** to get a detailed solar potential and ROI estimate.
 """)
+
 
