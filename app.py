@@ -61,7 +61,7 @@ def analyze_image(image_base64, location, electricity_rate):
     """
 
     payload = {
-        "model": "gpt-4o-mini",
+        "model": "deepseek/deepseek-prover-v2:free",
         "messages": [
             {
                 "role": "user",
@@ -172,6 +172,7 @@ st.markdown("""
 3. Input your **electricity rate** ($/kWh).
 4. Click **Analyze** to get a detailed solar potential and ROI estimate.
 """)
+
 
 
 
