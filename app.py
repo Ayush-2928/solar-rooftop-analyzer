@@ -23,7 +23,7 @@ components.html(ga_js, height=0)
 
 # --- Your normal Streamlit app below ---
 st.title("My Streamlit App")
-st.write("Google Analytics tracking has been added.")
+st.write("Google Analytics tracking has been added!.")
 
 
 
@@ -172,6 +172,7 @@ st.markdown("""
 3. Input your **electricity rate** ($/kWh).
 4. Click **Analyze** to get a detailed solar potential and ROI estimate.
 """)
+
 
 
 
