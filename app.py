@@ -61,7 +61,7 @@ def analyze_image(image_base64, location, electricity_rate):
     """
 
     payload = {
-        "model": "openai/gpt-4o",
+        "model": "nex-agi/deepseek-v3.1-nex-n1:free",
         "messages": [
             {
                 "role": "user",
@@ -172,6 +172,7 @@ st.markdown("""
 3. Input your **electricity rate** ($/kWh).
 4. Click **Analyze** to get a detailed solar potential and ROI estimate.
 """)
+
 
 
 
